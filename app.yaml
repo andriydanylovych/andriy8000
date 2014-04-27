@@ -1,0 +1,9 @@
+application: andriy8000
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+
+- url: /.*
+  script: andriy8000.py
