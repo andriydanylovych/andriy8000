@@ -17,6 +17,8 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 
 from datetime import datetime, timedelta
 
+#from Crypto.Cipher import AES
+
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 PASSWORD_RE = re.compile(r"^.{3,20}$")
 EMAIL_RE = re.compile(r"^[\S]+@[\S]+\.[\S]+$")
@@ -105,6 +107,19 @@ formb = """
   </body> 
   </html>"""
 
+formc = """ 
+  <html>
+  <head><title>Crypto</title></head>
+  <body>
+  <h2>Enter some text and a key:</h2>
+  <form method="post">
+      <input type='text' name='text' value='%(text)s'><br>
+      <input type='key' name='key' value='%(key)s'><br>
+      <input type="submit" value="Encrypt"> 
+  </form> 
+  </body> 
+  </html>"""
+
 ############## BLOG
 
 class Post(db.Model): 
@@ -134,6 +149,10 @@ class MainPage(webapp.RequestHandler):
     self.response.out.write(""" 
           <html><form action="/blog/delete"> 
             <div><input type="submit" value="Delete a post"></div> 
+          </form></html>""")
+    self.response.out.write(""" 
+          <html><form action="/crypto"> 
+            <div><input type="submit" value="Go to Crypto"></div> 
           </form></html>""")
     self.response.out.write(""" 
           <html><form action="/rot13"> 
@@ -395,6 +414,29 @@ class UserList(webapp.RequestHandler):
 
 
 
+########## CRYPTO
+
+class CryptoPage(webapp.RequestHandler):
+ 
+    def write_formc(self, text='', key=''): 
+        self.response.out.write(formc % {'text': text, 'key': key}) 
+
+    def get(self): 
+        self.write_formc()
+
+    def post(self):
+        rot13=''
+        text = self.request.get('text')
+        keydb = self.request.get('key')
+        if text:
+            rot13 = text.encode('rot13')
+            keyh = hashlib.sha256(keydb).hexdigest()
+        self.write_formc(text, keydb)
+        self.response.out.write('<div style="color: red">Encripted text: <b>%s</b></div>' % rot13)
+        self.response.out.write('<div>Hashlib text: <b>%s</b></div>' % keyh)
+        self.response.out.write('<div>Hashlib text: <b>%s</b></div>' % len(keyh))
+
+
 ########## ROT 13
 
 class Rot13(webapp.RequestHandler):
@@ -425,6 +467,7 @@ application = webapp.WSGIApplication(
                                       ('/blog/logout', LogoutPage),
                                       ('/blog/welcome', WelcomePage),
                                       ('/users', UserList),
+                                      ('/crypto', CryptoPage),
                                       ('/rot13', Rot13)], 
                                      debug=True) 
  
